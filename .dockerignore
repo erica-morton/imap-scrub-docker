@@ -1,0 +1,8 @@
+.git
+.claude
+terraform
+scripts
+*.md
+imap-scrub.yml
+imap-scrub.example.yml
+LICENSE
