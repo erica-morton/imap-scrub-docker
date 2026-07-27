@@ -110,3 +110,27 @@ After that, the job runs weekly (default: Sunday 06:00 UTC — tune with the
   picks up `:latest` on the next run.
 - The `export_mailbox` action writes mbox files locally, so like
   `save_attachments` it only makes sense outside the ephemeral Fargate task.
+
+### Cost
+
+Roughly **$1/month** (us-east-1 ballpark): the Secrets Manager secret is
+$0.40/month, weekly Fargate task runs on the smallest ARM size cost a few
+cents, and ECR storage plus CloudWatch logs add pennies. Everything is
+serverless — nothing runs (or bills) between scheduled runs.
+
+### Teardown
+
+```sh
+cd terraform
+terraform destroy
+```
+
+This removes everything, including the ECR repository and its images
+(`force_delete` is set). The secret is scheduled for deletion with Secrets
+Manager's default 30-day recovery window rather than destroyed immediately.
+
+## License
+
+[MIT](LICENSE). imap-scrub itself is
+[MIT-licensed](https://github.com/mixeme/imap-scrub/blob/develop/LICENSE) by
+its own authors.
