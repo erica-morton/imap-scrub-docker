@@ -1,0 +1,8 @@
+# Real config contains the IMAP password — never commit it
+imap-scrub.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars

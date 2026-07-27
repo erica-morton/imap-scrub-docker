@@ -1,0 +1,22 @@
+# Example imap-scrub config. Full reference:
+# https://github.com/mixeme/imap-scrub#all-yaml-config-options
+#
+# For the AWS setup, store the real version of this file in Secrets Manager:
+#   aws secretsmanager put-secret-value \
+#     --secret-id imap-scrub/config --secret-string file://imap-scrub.yml
+
+name: My Gmail Account
+host: imap.gmail.com
+user: example-user@gmail.com
+# For Gmail use an app password (requires 2FA): https://myaccount.google.com/apppasswords
+pass: MySecretPassword123
+save_path: /data
+rules:
+  - mailbox: "[Gmail]/All Mail"
+    min_size: 5120 # kB
+    older_than: 365 # days
+    actions: remove_attachments
+  - mailbox: "[Gmail]/All Mail"
+    from: invitations@linkedin.com
+    older_than: 30
+    actions: delete
