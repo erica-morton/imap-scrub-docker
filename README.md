@@ -1,7 +1,8 @@
 # imap-scrub-docker
 
-Runs [imap-scrub](https://github.com/axllent/imap-scrub) as a weekly scheduled
-job on AWS, packaged as a Docker image.
+Runs [imap-scrub](https://github.com/mixeme/imap-scrub) (the actively
+maintained fork of [axllent/imap-scrub](https://github.com/axllent/imap-scrub))
+as a weekly scheduled job on AWS, packaged as a Docker image.
 
 ```
 EventBridge Scheduler ──▶ ECS Fargate task ──▶ your IMAP server
@@ -33,7 +34,7 @@ docker run --rm -v "$PWD/imap-scrub.yml:/config/imap-scrub.yml:ro" imap-scrub -y
 ```
 
 Start from [`imap-scrub.example.yml`](imap-scrub.example.yml); all options are
-documented [upstream](https://github.com/axllent/imap-scrub#all-yaml-config-options).
+documented [upstream](https://github.com/mixeme/imap-scrub#all-yaml-config-options).
 Note that imap-scrub only supports username/password logins — for Gmail that
 means an [app password](https://myaccount.google.com/apppasswords) (requires
 2-step verification).
@@ -101,5 +102,8 @@ After that, the job runs weekly (default: Sunday 06:00 UTC — tune with the
   `delete` rules in the scheduled job, or run `save_attachments` locally
   first.
 - To upgrade imap-scrub, bump `IMAP_SCRUB_VERSION` in the [Dockerfile](Dockerfile)
-  and re-run `scripts/build-and-push.sh` — the schedule picks up `:latest` on
-  the next run.
+  along with the two `IMAP_SCRUB_SHA256_*` checksums (`shasum -a 256` the new
+  release tarballs), then re-run `scripts/build-and-push.sh` — the schedule
+  picks up `:latest` on the next run.
+- The `export_mailbox` action writes mbox files locally, so like
+  `save_attachments` it only makes sense outside the ephemeral Fargate task.

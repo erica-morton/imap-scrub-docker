@@ -1,5 +1,5 @@
 # Example imap-scrub config. Full reference:
-# https://github.com/axllent/imap-scrub#all-yaml-config-options
+# https://github.com/mixeme/imap-scrub#all-yaml-config-options
 #
 # For the AWS setup, store the real version of this file in Secrets Manager:
 #   aws secretsmanager put-secret-value \
