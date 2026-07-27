@@ -63,12 +63,15 @@ make the scheduled job a dry run while testing).
 **2. Store your config** in the secret the task reads:
 
 ```sh
-aws secretsmanager put-secret-value \
-  --secret-id imap-scrub/config \
-  --secret-string file://imap-scrub.yml
+cp imap-scrub.example.yml imap-scrub.yml   # ...then edit it
+scripts/push-config.sh
 ```
 
-(`imap-scrub.yml` is gitignored so the password can't end up in the repo.)
+The script first validates the file by having imap-scrub itself parse and
+print it (via the Docker image), then pushes it to the `imap-scrub/config`
+secret with `aws secretsmanager put-secret-value`. Re-run it any time the
+config changes — the next run picks it up automatically. (`imap-scrub.yml`
+is gitignored so the password can't end up in the repo.)
 
 **3. Build and push the image:**
 
