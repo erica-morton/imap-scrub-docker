@@ -16,4 +16,12 @@ if [ ! -f "$CONFIG_PATH" ]; then
     exit 1
 fi
 
+# Strip the --dry-run sentinel: imap-scrub dry-runs when -y is absent, but
+# callers overriding the container command (scripts/run-now.sh) need a
+# non-empty argument — ECS handling of empty command overrides is ambiguous.
+for arg do
+    shift
+    [ "$arg" = "--dry-run" ] || set -- "$@" "$arg"
+done
+
 exec /app/imap-scrub "$@" "$CONFIG_PATH"
