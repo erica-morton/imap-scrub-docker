@@ -7,3 +7,10 @@ backend.hcl
 *.tfstate
 *.tfstate.*
 *.tfvars
+
+# Saved plan files can contain sensitive values
+tf.plan
+*.tfplan
+
+# Claude Code session data (local settings, worktrees)
+.claude/
