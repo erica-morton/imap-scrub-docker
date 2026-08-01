@@ -69,6 +69,12 @@ variable "subnet_ids" {
   default     = []
 }
 
+variable "alert_email" {
+  description = "Email address to notify when a run fails (container exits non-zero or the task fails to start). Set to null to disable alerting. The SNS subscription must be confirmed via the email AWS sends."
+  type        = string
+  default     = null
+}
+
 variable "assign_public_ip" {
   description = "Assign a public IP to the task. Required for internet access from public subnets without a NAT gateway."
   type        = bool

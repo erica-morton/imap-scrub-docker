@@ -166,6 +166,91 @@ resource "aws_ecs_task_definition" "this" {
   }])
 }
 
+# --- Failure alerts ----------------------------------------------------------
+
+locals {
+  alert_count = var.alert_email == null ? 0 : 1
+}
+
+resource "aws_sns_topic" "alerts" {
+  count = local.alert_count
+  name  = "${var.name}-alerts"
+}
+
+resource "aws_sns_topic_subscription" "alert_email" {
+  count     = local.alert_count
+  topic_arn = aws_sns_topic.alerts[0].arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
+
+data "aws_iam_policy_document" "alerts_topic" {
+  count = local.alert_count
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.alerts[0].arn]
+
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_cloudwatch_event_rule.task_failed[0].arn]
+    }
+  }
+}
+
+resource "aws_sns_topic_policy" "alerts" {
+  count  = local.alert_count
+  arn    = aws_sns_topic.alerts[0].arn
+  policy = data.aws_iam_policy_document.alerts_topic[0].json
+}
+
+# Fires for any task in the cluster that stops unsuccessfully — a container
+# exiting non-zero (bad credentials, IMAP server down) or the task never
+# starting (missing secret value, unpullable image).
+resource "aws_cloudwatch_event_rule" "task_failed" {
+  count       = local.alert_count
+  name        = "${var.name}-task-failed"
+  description = "${var.name} run finished unsuccessfully"
+
+  event_pattern = jsonencode({
+    source      = ["aws.ecs"]
+    detail-type = ["ECS Task State Change"]
+    detail = {
+      clusterArn = [aws_ecs_cluster.this.arn]
+      lastStatus = ["STOPPED"]
+      "$or" = [
+        { stopCode = ["TaskFailedToStart"] },
+        { containers = { exitCode = [{ anything-but = 0 }] } }
+      ]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "task_failed_sns" {
+  count = local.alert_count
+  rule  = aws_cloudwatch_event_rule.task_failed[0].name
+  arn   = aws_sns_topic.alerts[0].arn
+
+  input_transformer {
+    input_paths = {
+      time     = "$.time"
+      stopCode = "$.detail.stopCode"
+      reason   = "$.detail.stoppedReason"
+      exitCode = "$.detail.containers[0].exitCode"
+    }
+
+    input_template = <<-EOT
+      "imap-scrub run FAILED at <time> (stopCode: <stopCode>, exit code: <exitCode>): <reason>. Inspect with: aws logs tail ${aws_cloudwatch_log_group.this.name} --since 1d"
+    EOT
+  }
+}
+
 # --- Weekly schedule ---------------------------------------------------------
 
 data "aws_iam_policy_document" "scheduler_assume" {

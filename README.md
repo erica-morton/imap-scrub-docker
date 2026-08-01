@@ -117,6 +117,21 @@ After that, the job runs weekly (default: Sunday 06:00 UTC — tune with the
 - The `export_mailbox` action writes mbox files locally, so like
   `save_attachments` it only makes sense outside the ephemeral Fargate task.
 
+### Failure notifications
+
+Set the `alert_email` variable (e.g. in a gitignored `terraform.tfvars`) and
+apply:
+
+```
+alert_email = "you@example.com"
+```
+
+AWS emails a subscription confirmation — click it once. After that, any run
+that finishes unsuccessfully (imap-scrub exiting non-zero, or the task
+failing to start at all) sends an email with the failure reason and exit
+code. Successful runs stay silent. Manual `scripts/run-now.sh` runs are
+covered by the same rule.
+
 ### Cost
 
 Roughly **$1/month** (us-east-1 ballpark): the Secrets Manager secret is
