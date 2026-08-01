@@ -1,0 +1,7 @@
+# Copy to backend.hcl (gitignored) and adjust, or let
+# scripts/bootstrap-state.sh generate it for you.
+bucket       = "imap-scrub-tfstate-<your-account-id>"
+key          = "imap-scrub/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true
