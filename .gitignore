@@ -3,6 +3,7 @@ imap-scrub.yml
 
 # Terraform
 .terraform/
+backend.hcl
 *.tfstate
 *.tfstate.*
 *.tfvars

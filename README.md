@@ -41,7 +41,7 @@ means an [app password](https://myaccount.google.com/apppasswords) (requires
 
 ## AWS setup
 
-Prerequisites: Terraform >= 1.5, Docker (with buildx), and the AWS CLI
+Prerequisites: Terraform >= 1.10, Docker (with buildx), and the AWS CLI
 authenticated against your account (`AWS_REGION` set or a default region
 configured).
 
@@ -49,10 +49,16 @@ configured).
 Secrets Manager secret, weekly schedule, IAM roles, log group):
 
 ```sh
+scripts/bootstrap-state.sh   # one time: state bucket + terraform init
 cd terraform
-terraform init
 terraform apply
 ```
+
+Terraform state is kept in a private, versioned S3 bucket — never in the
+repo, since state can expose infrastructure details and this repo is public.
+The bootstrap script creates the bucket (default
+`imap-scrub-tfstate-<account-id>`), writes the gitignored
+`terraform/backend.hcl`, and runs `terraform init` against it.
 
 By default the task runs in the account's default VPC with a public IP
 (Fargate needs a route to the internet to pull the image and reach your IMAP
@@ -115,8 +121,9 @@ After that, the job runs weekly (default: Sunday 06:00 UTC — tune with the
 
 Roughly **$1/month** (us-east-1 ballpark): the Secrets Manager secret is
 $0.40/month, weekly Fargate task runs on the smallest ARM size cost a few
-cents, and ECR storage plus CloudWatch logs add pennies. Everything is
-serverless — nothing runs (or bills) between scheduled runs.
+cents, and ECR storage, CloudWatch logs, and the Terraform state bucket add
+pennies. Everything is serverless — nothing runs (or bills) between
+scheduled runs.
 
 ### Teardown
 
@@ -128,6 +135,8 @@ terraform destroy
 This removes everything, including the ECR repository and its images
 (`force_delete` is set). The secret is scheduled for deletion with Secrets
 Manager's default 30-day recovery window rather than destroyed immediately.
+The state bucket is not managed by Terraform; once you're fully done, remove
+it with `aws s3 rb s3://imap-scrub-tfstate-<account-id> --force`.
 
 ## License
 
